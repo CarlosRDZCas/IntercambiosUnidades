@@ -44,6 +44,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => EditImageProvider()),
       ],
       child: MaterialApp(
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
         debugShowCheckedModeBanner: false,
         title: 'Intercambio Unidades',
         initialRoute: '/',
