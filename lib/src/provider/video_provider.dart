@@ -13,10 +13,25 @@ class VideoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  late VideoPlayerController? _controllerCons;
+  VideoPlayerController? get controllerCons => _controllerCons;
+  set controllerCons(VideoPlayerController? value) {
+    _controllerCons = value;
+    controllerCons!.value = value!.value;
+    notifyListeners();
+  }
+
   bool? _isInitialized = false;
   bool? get isInitialized => _isInitialized;
   set isInitialized(bool? value) {
     _isInitialized = value;
+    notifyListeners();
+  }
+
+  bool? _isInitializedCons = false;
+  bool? get isInitializedCons => _isInitializedCons;
+  set isInitializedCons(bool? value) {
+    _isInitializedCons = value;
     notifyListeners();
   }
 
@@ -27,16 +42,61 @@ class VideoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> initialize() async {
-    if (video == null) {
-      notifyListeners();
-      return;
+  bool? _isPlayingCons = false;
+  bool? get isPlayingCons => _isPlayingCons;
+  set isPlayingCons(bool? value) {
+    _isPlayingCons = value;
+    notifyListeners();
+  }
+
+  Future<void> initialize(bool cons) async {
+    if (cons) {
+      if (videoCons == null) {
+        notifyListeners();
+        return;
+      }
+      bool validURL = videoCons!.path.contains('http://') ||
+          videoCons!.path.contains('https://');
+      if (validURL) {
+        controllerCons = VideoPlayerController.network(videoCons!.path);
+        await controllerCons!.initialize();
+        await controllerCons!.play();
+        isPlayingCons = true;
+        notifyListeners();
+      } else {
+        controllerCons = VideoPlayerController.file(File(videoCons!.path));
+        await controllerCons!.initialize();
+        await controllerCons!.play();
+        isPlayingCons = true;
+        notifyListeners();
+      }
+    } else {
+      if (video == null) {
+        notifyListeners();
+        return;
+      }
+      bool validURL = videoCons!.path.contains('http://') ||
+          videoCons!.path.contains('https://');
+      if (validURL) {
+        controller = VideoPlayerController.network(video!.path);
+        await controller!.initialize();
+        await controller!.play();
+        isPlaying = true;
+        notifyListeners();
+      } else {
+        controller = VideoPlayerController.file(File(video!.path));
+        await controller!.initialize();
+        await controller!.play();
+        isPlaying = true;
+        notifyListeners();
+      }
     }
-    controller = VideoPlayerController.file(File(video!.path));
-    await controller!.initialize();
-    await controller!.setLooping(true);
-    await controller!.play();
-    isPlaying = true;
+  }
+
+  String? _error = '';
+  String? get error => _error;
+  set error(String? value) {
+    _error = value;
     notifyListeners();
   }
 
@@ -50,8 +110,24 @@ class VideoProvider extends ChangeNotifier {
     }
     _video = value;
     if (video != null) {
-      initialize();
+      initialize(false);
       isInitialized = true;
+    }
+    notifyListeners();
+  }
+
+  XFile? _videoCons;
+  XFile? get videoCons => _videoCons;
+  set videoCons(XFile? value) {
+    if (videoCons != null) {
+      controllerCons!.dispose();
+      isInitializedCons = false;
+      notifyListeners();
+    }
+    _videoCons = value;
+    if (videoCons != null) {
+      initialize(true);
+      isInitializedCons = true;
     }
     notifyListeners();
   }

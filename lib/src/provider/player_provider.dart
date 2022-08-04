@@ -12,6 +12,13 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Player? _controllerCons;
+  Player? get controllerCons => _controllerCons;
+  set controllerCons(Player? value) {
+    _controllerCons = value;
+    notifyListeners();
+  }
+
   bool? _isInitialized = false;
   bool? get isInitialized => _isInitialized;
   set isInitialized(bool? value) {
@@ -19,29 +26,47 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool? _isPlaying = false;
-  bool? get isPlaying => _isPlaying;
-  set isPlaying(bool? value) {
-    _isPlaying = value;
-    notifyListeners();
-  }
+  Future<void> initialize(bool cons) async {
+    if (cons) {
+      if (videoCons == null) {
+        notifyListeners();
+        return;
+      }
+      controllerCons = Player(
+        id: 0,
+        videoDimensions: const VideoDimensions(640, 360),
+      );
+      bool validURL = videoCons!.path.contains('http://') ||
+          videoCons!.path.contains('https://');
 
-  Future<void> initialize() async {
-    if (video == null) {
+      if (validURL) {
+        controllerCons!.open(Media.network(videoCons!.path), autoStart: true);
+      } else {
+        controllerCons!
+            .open(Media.file(File(videoCons!.path)), autoStart: true);
+      }
+      controllerCons!.play();
       notifyListeners();
-      return;
+    } else {
+      if (video == null) {
+        notifyListeners();
+        return;
+      }
+      controller = Player(
+        id: 1,
+        videoDimensions: const VideoDimensions(640, 360),
+      );
+      bool validURL =
+          video!.path.contains('http://') || video!.path.contains('https://');
+
+      if (validURL) {
+        controller!.open(Media.network(video!.path), autoStart: true);
+      } else {
+        controller!.open(Media.file(File(video!.path)), autoStart: true);
+      }
+      controller!.play();
+      notifyListeners();
     }
-    controller = Player(
-      id: 0,
-      videoDimensions: const VideoDimensions(640, 360),
-    );
-    controller!.open(
-      Media.file(File(video!.path)),
-      autoStart: true,
-    );
-    controller!.play();
-    isPlaying = true;
-    notifyListeners();
   }
 
   XFile? _video;
@@ -53,13 +78,28 @@ class PlayerProvider extends ChangeNotifier {
     }
     _video = value;
     if (video != null) {
-      initialize();
+      initialize(false);
       isInitialized = true;
     }
     notifyListeners();
   }
 
-  void clear(){
+  XFile? _videoCons;
+  XFile? get videoCons => _videoCons;
+  set videoCons(XFile? value) {
+    if (videoCons != null) {
+      isInitialized = false;
+      notifyListeners();
+    }
+    _videoCons = value;
+    if (videoCons != null) {
+      initialize(true);
+      isInitialized = true;
+    }
+    notifyListeners();
+  }
+
+  void clear() {
     video = null;
     notifyListeners();
   }

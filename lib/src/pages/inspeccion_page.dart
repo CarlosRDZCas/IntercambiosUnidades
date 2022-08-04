@@ -102,7 +102,7 @@ class TabVideo extends StatelessWidget {
                           ),
                         ),
                       )
-                    : const CustomVideoPlayer(),
+                    : const CustomVideoPlayer(cons: false),
                 onTap: () {
                   showModal(
                     context,
@@ -172,7 +172,7 @@ class TabVideo extends StatelessWidget {
                           ),
                         ),
                       )
-                    : const DartVLC(),
+                    : const DartVLC(cons: false),
               ],
             ),
           ),

@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
+
 import 'package:intercambio_unidades/src/components/components.dart';
+import 'package:intercambio_unidades/src/widgets/dart_vlc.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/providers.dart';
+import '../widgets/widgets.dart';
 
 class IntercambioPage extends StatelessWidget {
   const IntercambioPage({Key? key}) : super(key: key);
@@ -12,76 +17,229 @@ class IntercambioPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final intercambioProvider = Provider.of<IntercambioProvider>(context);
 
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: CustomColors.primary,
-          elevation: 2,
-          title: Center(
-              child: Text(
-                  'Intercambio de Unidad: ${intercambioProvider.intercambio?.carro ?? ''}')),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  showSearch(
-                      context: context, delegate: CustomSearchDelegate());
-                },
-                icon: const Icon(Icons.search))
-          ],
-        ),
-        body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              ExpansionPanelList(
-                dividerColor: CustomColors.primary,
-                expansionCallback: (int index, bool isExpanded) {
-                  switch (index) {
-                    case 0:
-                      intercambioProvider.datosIsExpanded = !isExpanded;
-                      break;
-                    case 1:
-                      intercambioProvider.detallesIsExpanded = !isExpanded;
-                      break;
-                    case 2:
-                      intercambioProvider.imagenIsExpanded = !isExpanded;
-                  }
-                },
-                children: [
-                  ExpansionPanel(
-                      isExpanded: intercambioProvider.datosIsExpanded!,
-                      headerBuilder: (BuildContext context, bool isExpanded) {
-                        return Center(
-                            child:
-                                Text('Datos de la unidad', style: textStyle()));
-                      },
-                      body: const DatosUnidad()),
-                  ExpansionPanel(
-                      isExpanded: intercambioProvider.detallesIsExpanded!,
-                      headerBuilder: (BuildContext context, bool isExpanded) {
-                        return Center(
-                            child: Text('Detalles de la unidad',
-                                style: textStyle()));
-                      },
-                      body: const DetallesBody()),
-                  ExpansionPanel(
-                      isExpanded: intercambioProvider.imagenIsExpanded!,
-                      headerBuilder: (BuildContext context, bool isExpanded) {
-                        return Center(
-                            child: Text('Imagenes de la unidad',
-                                style: textStyle()));
-                      },
-                      body: intercambioProvider.intercambio != null
-                          ? const ImagenesBody()
-                          : Container()),
-                ],
-              ),
+    return SafeArea(
+      child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: CustomColors.primary,
+            elevation: 2,
+            title: Center(
+                child: Text(
+                    'Intercambio de Unidad: ${intercambioProvider.intercambio?.carro ?? ''}')),
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    showSearch(
+                        context: context, delegate: CustomSearchDelegate());
+                  },
+                  icon: const Icon(Icons.search))
             ],
           ),
-        ));
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Text('Datos de la unidad', style: textStyle()),
+                const Padding(
+                    padding: EdgeInsets.all(10), child: DatosUnidad()),
+                ExpansionPanelList(
+                  dividerColor: CustomColors.primary,
+                  expansionCallback: (int index, bool isExpanded) {
+                    switch (index) {
+                      case 0:
+                        intercambioProvider.detallesIsExpanded = !isExpanded;
+                        break;
+                      case 1:
+                        intercambioProvider.imagenIsExpanded = !isExpanded;
+                        break;
+                      case 2:
+                        intercambioProvider.videoIsExpanded = !isExpanded;
+                        break;
+                    }
+                  },
+                  children: [
+                    ExpansionPanel(
+                        isExpanded: intercambioProvider.detallesIsExpanded!,
+                        headerBuilder: (BuildContext context, bool isExpanded) {
+                          return Center(
+                              child: Text('Detalles de la unidad',
+                                  style: textStyle()));
+                        },
+                        canTapOnHeader: true,
+                        body: const DetallesBody()),
+                    ExpansionPanel(
+                        isExpanded: intercambioProvider.imagenIsExpanded!,
+                        headerBuilder: (BuildContext context, bool isExpanded) {
+                          return Center(
+                              child: Text('Imagenes de la unidad',
+                                  style: textStyle()));
+                        },
+                        canTapOnHeader: true,
+                        body: intercambioProvider.intercambio != null
+                            ? const ImagenesBody()
+                            : Container()),
+                    ExpansionPanel(
+                        isExpanded: intercambioProvider.videoIsExpanded!,
+                        headerBuilder: (BuildContext context, bool isExpanded) {
+                          return Center(
+                              child: Text('Video de la unidad',
+                                  style: textStyle()));
+                        },
+                        canTapOnHeader: true,
+                        body: intercambioProvider.intercambio?.video != null
+                            ? const VideoBody()
+                            : Container()),
+                  ],
+                ),
+              ],
+            ),
+          )),
+    );
   }
 
   TextStyle textStyle() =>
       const TextStyle(fontWeight: FontWeight.bold, fontSize: 20);
+}
+
+class VideoBody extends StatelessWidget {
+  const VideoBody({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final intercambioProvider =
+        Provider.of<IntercambioProvider>(context, listen: false);
+    if (intercambioProvider.intercambio?.video != null) {
+      if (Platform.isWindows) {
+        return const DartVLC(cons: true);
+      } else {
+        return Column(
+          children: const [
+            CustomVideoPlayer(cons: true),
+            ControlsCons(),
+          ],
+        );
+      }
+    } else {
+      return Container();
+    }
+  }
+}
+
+class ControlsCons extends StatelessWidget {
+  const ControlsCons({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final videoProvider = Provider.of<VideoProvider>(context);
+    return videoProvider.isInitializedCons == true
+        ? Column(
+            children: [
+              const SizedBox(height: 10),
+              Text(
+                'Duracion:  ${videoProvider.controllerCons!.value.duration.toString().substring(2, 7)}',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                ),
+              ),
+              Container(
+                height: 89,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: CustomColors.primary,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.fast_rewind_rounded,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {
+                          videoProvider.controllerCons!.seekTo(Duration(
+                              seconds: videoProvider
+                                      .controllerCons!.value.position.inSeconds -
+                                  10));
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: videoProvider.isPlayingCons == true
+                            ? Colors.blue
+                            : CustomColors.primary,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        onPressed: () {
+                          videoProvider.controllerCons!.play();
+                          videoProvider.isPlayingCons = true;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: videoProvider.isPlayingCons == false
+                            ? Colors.red
+                            : CustomColors.primary,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.pause_rounded),
+                        onPressed: () {
+                          videoProvider.controllerCons!.pause();
+                          videoProvider.isPlayingCons = false;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: CustomColors.primary,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.stop_rounded),
+                        onPressed: () {
+                          videoProvider.controllerCons!
+                              .seekTo(const Duration(seconds: 0));
+                          videoProvider.controllerCons!.pause();
+                          videoProvider.isPlayingCons = false;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: CustomColors.primary,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.fast_forward_rounded),
+                        onPressed: () {
+                          videoProvider.controllerCons!.seekTo(Duration(
+                              seconds: videoProvider
+                                      .controllerCons!.value.position.inSeconds +
+                                  10));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          )
+        : Container();
+  }
 }
 
 class DatosUnidad extends StatelessWidget {
@@ -492,6 +650,7 @@ class DetallesBody extends StatelessWidget {
   ExpansionPanel _panelInterior(int counter, bool isExpanded) {
     return ExpansionPanel(
         isExpanded: isExpanded,
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -518,6 +677,7 @@ class DetallesBody extends StatelessWidget {
   ExpansionPanel _panelTrampasYAcum(int counter, bool isExpanded) {
     return ExpansionPanel(
         isExpanded: isExpanded,
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -544,6 +704,7 @@ class DetallesBody extends StatelessWidget {
   ExpansionPanel _panelTrasera(int counter, bool isExpanded) {
     return ExpansionPanel(
         isExpanded: isExpanded,
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -570,6 +731,7 @@ class DetallesBody extends StatelessWidget {
   ExpansionPanel _panelLateralIzq(int counter, bool isExpanded) {
     return ExpansionPanel(
         isExpanded: isExpanded,
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -596,6 +758,7 @@ class DetallesBody extends StatelessWidget {
   ExpansionPanel _panelLateralDer(int contador, bool isExpanded) {
     return ExpansionPanel(
         isExpanded: isExpanded,
+        canTapOnHeader: true,
         headerBuilder: (BuildContext context, bool isExpanded) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -622,6 +785,7 @@ class DetallesBody extends StatelessWidget {
 
   ExpansionPanel _panelFrontal(int contador, bool isExpanded) {
     return ExpansionPanel(
+      canTapOnHeader: true,
       isExpanded: isExpanded,
       headerBuilder: (BuildContext context, bool isExpanded) {
         return Row(

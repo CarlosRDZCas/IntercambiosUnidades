@@ -14,13 +14,6 @@ class IntercambioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool? _datosIsExpanded = true;
-  bool? get datosIsExpanded => _datosIsExpanded;
-  set datosIsExpanded(bool? value) {
-    _datosIsExpanded = value;
-    notifyListeners();
-  }
-
   bool? _detallesIsExpanded = true;
   bool? get detallesIsExpanded => _detallesIsExpanded;
   set detallesIsExpanded(bool? value) {

@@ -54,16 +54,8 @@ class Camara {
           'jpg',
           'png',
           'jepg',
-          'gif',
           'mp4',
           'mov',
-          'avi',
-          'mkv',
-          'flv',
-          'wmv',
-          'mpg',
-          'mpeg',
-          '3gp'
         ],
       );
       if (result != null) {

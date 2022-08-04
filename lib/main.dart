@@ -19,7 +19,7 @@ class MyHttpOverrides extends HttpOverrides {
 
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
-  await DartVLC.initialize();
+  await DartVLC.initialize(useFlutterNativeView: true);
   runApp(const MyApp());
 }
 

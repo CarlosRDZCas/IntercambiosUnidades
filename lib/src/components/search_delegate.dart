@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intercambio_unidades/src/models/intercambio_model.dart';
 import 'package:provider/provider.dart';
 
@@ -32,8 +35,28 @@ class CustomSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    // TODO: implement buildResults
-    return const Text('buildResults');
+    if (query.isEmpty) {
+      return const _EmptyResponse();
+    } else {
+      final intercambiosProvider =
+          Provider.of<IntercambioProvider>(context, listen: false);
+      return FutureBuilder(
+        future: intercambiosProvider.getIntercambios(query),
+        builder:
+            (BuildContext context, AsyncSnapshot<List<Intercambio>?> snapshot) {
+          if (!snapshot.hasData) {
+            return const _EmptyResponse();
+          }
+          final intercambios = snapshot.data;
+          return ListView.builder(
+            itemCount: intercambios?.length,
+            itemBuilder: (BuildContext context, int index) {
+              return _IntercambioItem(intercambio: intercambios![index]);
+            },
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -72,10 +95,15 @@ class _IntercambioItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final intercambioProvider =
         Provider.of<IntercambioProvider>(context, listen: false);
+    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
 
     return ListTile(
       onTap: () {
         intercambioProvider.intercambio = intercambio;
+        Platform.isWindows
+            ? playerProvider.videoCons = XFile(intercambio.video)
+            : videoProvider.videoCons = XFile(intercambio.video);
         Navigator.pop(context);
       },
       title: Text(
